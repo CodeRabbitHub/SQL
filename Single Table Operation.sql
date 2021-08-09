@@ -203,3 +203,76 @@ WITH X AS (
 
 SELECT AVG(cust_spent)
 FROM X
+
+/* Single Table Operation:
+Lecture 3: IN, BETWEEN, LIKE, CASE WHEN*/
+
+--11. Actors' last name
+
+SELECT
+    last_name,
+    count(*)
+FROM actor
+WHERE last_name IN ('DAVIS', 'BRODY', 'ALLEN', 'BERRY')
+GROUP BY last_name
+
+--12. Actors' last name ending in 'EN' or 'RY'
+
+SELECT
+    last_name,
+    COUNT(*)
+FROM actor
+WHERE last_name LIKE ('%EN')
+OR last_name LIKE ('%RY')
+GROUP BY last_name
+
+--13. Actors' first name
+
+SELECT
+    CASE WHEN first_name LIKE 'A%' THEN 'a_actors'
+         WHEN first_name LIKE 'B%' THEN 'b_actors'
+         WHEN first_name LIKE 'C%' THEN 'c_actors'
+         ELSE 'other_actors'
+         END AS actor_category,
+    COUNT(*)
+FROM actor
+GROUP BY actor_category
+
+
+--14. Good days and bad days
+
+WITH X AS (
+    SELECT
+        DATE(rental_ts) AS day,
+        COUNT(*) AS cnt
+    FROM rental
+    WHERE DATE(payment_ts) BETWEEN '2020-05-01' AND '2020-05-31'
+    GROUP BY day
+)
+
+SELECT
+    SUM(CASE WHEN cnt > 100 THEN 1 ELSE 0
+    END) AS good_days,
+
+    31 - SUM(CASE WHEN cnt > 100 THEN 1 ELSE 0
+    END) AS bad_days
+FROM X
+
+--15. Fast movie watchers vs slow watchers
+
+WITH X AS (
+    SELECT customer_id,
+    AVG(EXTRACT(DAYS FROM (return_ts - rental_ts)) + 1) AS avg_days
+    FROM rental
+    WHERE return_ts IS NOT NULL
+    GROUP BY customer_id
+)
+
+SELECT CASE WHEN avg_days <=5 THEN 'fast_watcher'
+            WHEN avg_days > 5 THEN 'slow_watcher'
+            ELSE NULL
+            END AS watcher_category,
+COUNT(*) AS count
+FROM X
+GROUP BY watcher_category
+
