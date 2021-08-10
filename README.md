@@ -1,7 +1,7 @@
 # SQL
 Practicing SQL coding questions
 
-[](https://ibb.co/nQL11Kd)
+![](https://i.ibb.co/6DWttq9/database-696x435-2.jpg)
 
 In this repository I'll be posting my solutions to the SQL questions from [SQLPad](https://sqlpad.io/).
 The database schema can be found here - [SQL Playground](https://sqlpad.io/sql-playground/)
