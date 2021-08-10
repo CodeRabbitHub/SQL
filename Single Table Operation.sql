@@ -154,7 +154,7 @@ WITH X AS (
     SELECT
         customer_id,
         SUM(amount) as total_amt
-    FROM payemnt
+    FROM payment
     WHERE DATE(payment_ts) BETWEEN '2020-02-01' AND '2020-02-29'
     GROUP BY customer_id
     ORDER BY total_amt DESC
@@ -276,3 +276,221 @@ COUNT(*) AS count
 FROM X
 GROUP BY watcher_category
 
+--22. Average cost per rental transaction
+
+SELECT AVG(amount)
+FROM payment
+WHERE DATE(payment_ts) BETWEEN '2020-05-01' AND '2020-05-31'
+
+--24. Films with more than 10 actors
+
+WITH X AS(
+    SELECT
+        film_id,
+        COUNT(*) AS cnt
+    FROM film_actor
+    GROUP BY film_id
+    HAVING cnt >=10
+)
+
+SELECT title
+FROM film
+WHERE film_id
+IN (
+    SELECT film_id
+    FROM X
+)
+
+--25. Shortest film
+
+SELECT title
+FROM film
+ORDER BY length
+LIMIT 1
+
+--26. Second shortest film
+
+WITH X AS (
+    SELECT film_id
+    FROM film
+    ORDER BY length
+    LIMIT 2
+)
+
+SELECT title
+FROM film
+WHERE film
+IN (
+    SELECT film_id
+    FROM X
+    ORDER BY length DESC
+    LIMIT 1
+)
+
+--27. Film with largest cast
+
+WITH X AS (
+    SELECT
+        film_id,
+        COUNT(*) AS cnt
+    FROM film_actor
+    GROUP BY film_id
+    ORDER BY cnt DESC
+    LIMIT 1
+)
+
+SELECT title
+FROM film
+WHERE film_id
+IN (
+    SELECT film_id
+    FROM X
+)
+
+--28. Film with the second largest cast
+
+WITH X AS (
+    SELECT
+        film_id,
+        COUNT(*) AS cnt
+    FROM film_actor
+    GROUP BY film_id
+    ORDER BY cnt DESC
+    LIMIT 2
+)
+
+SELECT title
+FROM film
+WHERE film_id
+IN (
+    SELECT film_id
+    FROM X
+    ORDER BY cnt ASC 
+    LIMIT 1
+)
+
+--29. Second highest spend customer
+
+WITH X AS (
+    SELECT
+        customer_id,
+        SUM(amount) as amt
+    FROM payment
+    WHERE DATE(payment_ts) BETWEEN '2020-05-01' AND '2020-05-31'
+    GROUP BY customer_id
+    ORDER BY amt DESC
+    LIMIT 2
+)
+
+SELECT first_name, last_name
+FROM customer
+WHERE customer_id
+IN (
+    SELECT customer_id
+    FROM X
+    ORDER BY amt ASC
+    LIMIT 1
+)
+
+--30. Inactive customers in May
+
+SELECT COUNT(*)
+FROM customer
+WHERE customer_id
+NOT IN (
+    SELECT customer_id
+    FROM rental
+    WHERE DATE(rental_ts) BETWEEN '2020-05-01' AND '2020-05-31'
+)
+
+--31. Movies that have not been returned
+
+WITH X AS (
+    SELECT DISTINCT film_id
+    FROM inventory
+    WHERE inventory_id
+    IN (
+        SELECT inventory_id
+        FROM rental
+        WHERE return_ts IS NULL
+        )
+)
+SELECT title
+FROM film
+WHERE film_id
+IN (
+    SELECT film_id
+    FROM X
+)
+
+--32. Unpopular movies
+
+WITH X AS (
+    SELECT DISTINCT film_id
+    FROM inventory
+    WHERE inventory_id
+    IN (
+        SELECT inventory_id
+        FROM rental
+        WHERE DATE(rental_ts) BETWEEN '2020-02-01' AND '2020-02-29'
+    )
+)
+
+SELECT COUNT(*)
+FROM film
+WHERE film_id
+NOT IN (
+        SELECT film_id
+        FROM X
+)
+
+--33. Returning customers
+
+WITH X AS (
+    SELECT DISTINCT customer_id
+    FROM rental
+    WHERE DATE(rental_ts) >= '2020-05-01'
+    AND DATE(rental_ts) <= '2020-05-31' 
+)
+
+SELECT COUNT(DISTINCT customer_id)
+FROM rental
+WHERE DATE(rental_ts) >= '2020-06-01'
+AND DATE(rental_ts) <= '2020-06-30'
+AND customer_id
+IN (
+    SELECT customer_id
+    FROM X
+)
+
+--34. Stocked up movies 
+
+WITH X AS (
+    SELECT film_id,
+    COUNT(*)
+    FROM inventory
+    GROUP BY film_id
+    HAVING COUNT(*) > 7
+)
+
+SELECT title 
+FROM film
+WHERE film_id
+IN (
+    SELECT film_id
+    FROM X
+)
+
+--35. Film length report
+
+SELECT
+    CASE WHEN length < 60 THEN 'short'
+         WHEN length >= 100 THEN 'long'
+         WHEN length >=60 AND length <100 THEN 'medium'
+         ELSE NULL
+         END AS film_category,
+    COUNT(*) AS count
+FROM film
+GROUP BY film_category
+
+            
