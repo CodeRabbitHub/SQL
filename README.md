@@ -6,3 +6,8 @@ The database schema can be found here - [SQL Playground](https://sqlpad.io/sql-p
 
 If you are starting with SQL and you would like a course recommendation, I would suggest:  
 + [Master SQL For Data Science](https://www.udemy.com/course/master-sql-for-data-science/) created by Imtiaz Ahmad.
+
++ **Single Table Operations**
+  + SELECT, WHERE, AND, OR, ORDER BY, LIMIT
+  + COUNT, SUM, AVERAGE, MIN, MAX, GROUP BY, HAVING
+  + IN, BETWEEN, LIKE, CASE WHEN
