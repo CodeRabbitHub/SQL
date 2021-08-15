@@ -105,3 +105,57 @@ GROUP BY CT.city
 ORDER BY sum DESC
 LIMIT 5
 
+/*Multi-Table Operation: Lecture 2: OUTER JOINS*/
+
+--41. Productive actors vs less-productive actors
+
+WITH X AS (
+        SELECT
+        A.actor_id,
+        CASE WHEN COUNT(DISTINCT FA.film_id) >= 30 THEN 'productive'
+             ELSE 'less productive'
+        END AS actor_category
+        FROM actor A
+        LEFT JOIN film_actor FA
+        ON FA.actor_id = A.actor_id
+        GROUP BY A.actor_id
+)
+SELECT actor_category, COUNT(*)
+FROM X
+GROUP BY actor_category
+
+--42. Films that are in stock vs not in stock
+
+WITH X AS(
+        SELECT F.film_id,
+        MAX(CASE WHEN I.inventory_id NOT NULL THEN 'in stock'
+             ELSE 'not in stock'
+        END) AS in_stock
+        FROM film F
+        LEFT JOIN inventory I 
+        ON F.film_id = I.inventory_id
+        GROUP BY F.film_id
+)
+SELECT in_stock, COUNT(*)
+FROM X
+GROUP BY in_stock
+
+
+--43. Customers who rented vs. those who did not
+
+SELECT have_rented, COUNT(*)
+FROM (
+    SELECT C.customer_id,
+        CASE WHEN R.customer_id IS NOT NULL THEN 'rented'
+             ELSE 'never-rented'
+        END AS have_rented
+        FROM customer
+        LEFT JOIN (
+            SELECT DISTINCT customer_id
+            FROM rental
+            WHERE DATE(rental_ts) BETWEEN '2020-05-01' AND '2020-05-31'
+                ) R 
+        ON R.customer_id = C.customer_id
+ ) X
+GROUP BY have_rented
+
