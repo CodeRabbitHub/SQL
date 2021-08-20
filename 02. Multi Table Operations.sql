@@ -159,3 +159,136 @@ FROM (
  ) X
 GROUP BY have_rented
 
+--44. In-demand vs not-in-demand movies
+
+SELECT demand_category, COUNT(*)
+FROM (
+    SELECT
+        F.film_id,
+        CASE WHEN COUNT(R.rental_id)>1 THEN 'in-demand'
+             ELSE 'not-in-demand'
+        FROM film F
+        LEFT JOIN inventory I
+        ON F.film_id = I.film_id
+        LEFT JOIN (
+            SELECT inventory_id, rental_id
+            FROM rental
+            WHERE DATE(rental_ts) BETWEEN '2020-05-01' AND '2020-05-31'
+        ) R 
+        ON R.inventory_id = I.inventory_id
+        GROUP BY F.film_id
+    ) X
+GROUP BY demand_category
+
+--45. Movie inventory optimization
+
+SELECT COUNT(inventory_id )
+FROM inventory I
+INNER JOIN (
+        SELECT F.film_id
+        FROM film F
+        LEFT JOIN (
+            SELECT DISTINCT I.film_id
+            FROM inventory I
+            INNER JOIN (
+                SELECT inventory_id, rental_id
+                FROM rental
+                WHERE DATE(rental_ts) >= '2020-05-01'
+                AND DATE(rental_ts) <= '2020-05-31'
+                ) R
+                ON I.inventory_id = R.inventory_id
+        ) X ON X.film_id = F.film_id
+        WHERE X.film_id IS NULL
+)Y
+ON Y.film_id = I.film_id;
+
+--51. Movie only actor 
+
+SELECT M.first_name, M.last_name
+FROM actor_movie M
+LEFT JOIN actor_tv T
+ON M.actor_id = T.actor_id
+WHERE T.actor_id is NULL
+
+--52. Movies cast by movie only actors
+
+SELECT film_id,
+FROM film F 
+LEFT JOIN(
+    SELECT DISTINCT FA.film_id
+    FROM film_actor FA
+    INNER JOIN actor_tv T
+    ON T.actor_id = FA.actor_id
+)X
+ON F.film_id = X.film_id
+WHERE X.film_id IS NULL
+
+--53. Movie groups by rental income
+
+SELECT film_group, COUNT(*)
+FROM (SELECT 
+        F.film_id,
+        CASE WHEN SUM(P.amount) >=100 THEN 'high'
+             WHEN SUM(P.amount) >=20 THEN 'medium'
+             ELSE 'low'
+        END AS film_group
+      FROM film
+      LEFT JOIN inventory I
+      ON I.film_id = F.film_id
+      LEFT JOIN rental R 
+      ON R.inventory_id = I.inventory_id
+      LEFT JOIN payment P
+      ON P.rental_id = R.rental_id
+      GROUP BY F.film_id
+)X
+GROUP BY film_group
+
+--54. Customer groups by movie rental spend 
+
+SELECT customer_group, COUNT(*)
+FROM (
+    SELECT
+    C.customer_id,
+    CASE WHEN SUM(P.amount)>=150 THEN 'high'
+         WHEN SUM(P.amount)>=100 THEN 'medium'
+         ELSE 'low' END customer_group
+    FROM customer C
+    LEFT JOIN payment P
+    ON P.customer_id = C. customer_id
+    GROUP BY C.customer_id
+)X
+GROUP BY customer_group
+
+--55. Busy days and slow days
+
+SELECT date_category, COUNT(*)
+FROM (
+    SELECT 
+        D.date,
+        CASE WHEN (*) >= 100 THEN 'busy'
+             ELSE 'slow'
+        END AS date_category
+        FROM dates D
+        LEFT JOIN (
+            SEELCT * FROM RENTAL
+        ) R
+        ON D.date = DATE(R.rental_ts)
+        WHERE D.date >= '2020-05-01'
+        AND D.date <= '2020-05-31'
+        GROUP BY D.date
+) X
+GROUP BY date_category
+
+--56. Total number of actors
+
+SELECT COUNT(DISTINCT actor_id)
+FROM (
+    SELECT COALESCE(T.actor_id, M.actor_id) AS actor_id
+    FROM actor_tv T
+    FULL OUTER JOIN actor_movie M 
+    ON M.actor_id = T.actor_id
+) X
+
+
+
+
