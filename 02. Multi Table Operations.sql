@@ -289,6 +289,34 @@ FROM (
     ON M.actor_id = T.actor_id
 ) X
 
+/*Multi-Table Operation: Lecture 3: UNION, UNION ALL */
 
+--46. Actors and customers whose last name starts with 'A'
 
+SELECT first_name, last_name
+FROM customer
+WHERE last_name LIKE 'A%'
+UNION
+SELECT first_name, last_name
+FROM actor
+WHERE last_name LIKE 'A%'
 
+--47. Actors and customers whose first names end in 'D'
+
+SELECT first_name, last_name
+FROM customer
+WHERE first_name LIKE '%D'
+UNION
+SELECT first_name, last_name
+FROM actor
+WHERE first_name LIKE '%D'
+
+--57. Total number of actors (with UNION)
+
+SELECT COUNT(*) FROM (
+    SELECT T.actor_id
+    FROM actor_tv T
+    UNION
+    SELECT M.actor_id
+    FROM actor_movie M
+) X
